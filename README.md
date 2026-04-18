@@ -23,6 +23,4 @@ This project is being built to demonstrate full-stack development skills for SWE
 
 🚧 In development (MVP)
 
-## 💡 Inspiration
 
-Inspired by apps like MyFitnessPal, with a focus on affordability and simplicity.
