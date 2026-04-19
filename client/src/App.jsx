@@ -1,24 +1,21 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import MealPlanner from "./pages/MealPlanner";
+import GroceryList from "./pages/GroceryList";
 
 function App() {
-  const [message, setMessage] = useState("Loading...");
-
-  useEffect(() => {
-    fetch("http://localhost:5001/api/health")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.status))
-      .catch((err) => {
-        console.error(err);
-        setMessage("Backend not connected");
-      });
-  }, []);
-
   return (
-    <div>
-      <h1>Nutrify</h1>
-      <p>Frontend is working</p>
-      <p>Backend status: {message}</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/planner" element={<MealPlanner />} />
+        <Route path="/grocery-list" element={<GroceryList />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
