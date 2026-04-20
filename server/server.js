@@ -28,6 +28,19 @@ app.post("/api/signup", (req, res) => {
   });
 });
 
+app.post("/api/login", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  res.status(200).json({
+    message: "Login successful",
+    user: { email },
+  });
+});
+
 const PORT = 5001;
 
 app.listen(PORT, () => {
