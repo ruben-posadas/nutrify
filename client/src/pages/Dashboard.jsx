@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFoodLog, deleteFoodLog, getDashboardSummary } from "../services/api";
+import { createFoodLog, deleteFoodLog, getDashboardSummary, updateGoals } from "../services/api";
 
 function Dashboard() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -14,6 +14,12 @@ function Dashboard() {
     carbs: "",
     fat: "",
   });
+  const [goalsForm, setGoalsForm] = useState({
+    calories: "",
+    protein: "",
+    carbs: "",
+    fat: "",
+  });
 
   async function loadSummary(selectedDate) {
     setIsLoading(true);
@@ -22,6 +28,12 @@ function Dashboard() {
     try {
       const data = await getDashboardSummary(selectedDate);
       setSummary(data);
+      setGoalsForm({
+        calories: String(data.goals?.calories ?? ""),
+        protein: String(data.goals?.protein ?? ""),
+        carbs: String(data.goals?.carbs ?? ""),
+        fat: String(data.goals?.fat ?? ""),
+      });
     } catch (requestError) {
       setError(requestError.message || "Unable to load dashboard");
     } finally {
@@ -36,6 +48,23 @@ function Dashboard() {
   function handleChange(event) {
     const { name, value } = event.target;
     setFormData((previous) => ({ ...previous, [name]: value }));
+  }
+
+  function handleGoalsChange(event) {
+    const { name, value } = event.target;
+    setGoalsForm((previous) => ({ ...previous, [name]: value }));
+  }
+
+  async function handleUpdateGoals(event) {
+    event.preventDefault();
+    setError("");
+
+    try {
+      await updateGoals(goalsForm);
+      await loadSummary(date);
+    } catch (requestError) {
+      setError(requestError.message || "Failed to update goals");
+    }
   }
 
   async function handleCreateFoodLog(event) {
@@ -133,6 +162,41 @@ function Dashboard() {
           </div>
 
           <div className="panel-grid">
+            <section className="panel">
+              <h2>Daily goals</h2>
+              <form onSubmit={handleUpdateGoals} className="stack-form">
+                <input
+                  type="number"
+                  name="calories"
+                  placeholder="Calories goal"
+                  value={goalsForm.calories}
+                  onChange={handleGoalsChange}
+                />
+                <input
+                  type="number"
+                  name="protein"
+                  placeholder="Protein goal (g)"
+                  value={goalsForm.protein}
+                  onChange={handleGoalsChange}
+                />
+                <input
+                  type="number"
+                  name="carbs"
+                  placeholder="Carb goal (g)"
+                  value={goalsForm.carbs}
+                  onChange={handleGoalsChange}
+                />
+                <input
+                  type="number"
+                  name="fat"
+                  placeholder="Fat goal (g)"
+                  value={goalsForm.fat}
+                  onChange={handleGoalsChange}
+                />
+                <button type="submit">Save goals</button>
+              </form>
+            </section>
+
             <section className="panel">
               <h2>Add meal log</h2>
               <form onSubmit={handleCreateFoodLog} className="stack-form">

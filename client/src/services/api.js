@@ -46,6 +46,13 @@ export async function getDashboardSummary(date) {
   return request(`/dashboard/summary${query}`);
 }
 
+export async function updateGoals(payload) {
+  return request("/goals", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function createFoodLog(payload) {
   return request("/food-logs", {
     method: "POST",
