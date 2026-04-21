@@ -1,6 +1,69 @@
+# Dependencies
 node_modules/
+
+# Builds and coverage
 dist/
+build/
+coverage/
+.nyc_output/
+
+# Environment and secrets
 .env
-.DS_Store
-**/.vite/
+.env.*
+*.local
+*.secret
+*.secrets
+*.key
+*.pem
+*.p12
+!.env.example
+!**/.env.example
+
+# Runtime and debug output
+*.log
+logs/
+*.pid
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 cookies.txt
+
+# Caches and temp files
+.cache/
+.eslintcache
+.parcel-cache/
+.turbo/
+.vite/
+**/.vite/
+tmp/
+temp/
+
+# Local data dumps, archives, and backups
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+*.dump
+*.bak
+*.backup
+*.tmp
+*.old
+*.orig
+*.swp
+*.swo
+*.zip
+*.tar
+*.gz
+*.7z
+
+# OS and editor files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+.Spotlight-V100
+.Trashes
+.idea/
+.vscode/
