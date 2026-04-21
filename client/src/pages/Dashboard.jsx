@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFoodLog, deleteFoodLog, getDashboardSummary, updateGoals } from "../services/api";
+import {
+  createFoodLog,
+  deleteFoodLog,
+  getDashboardSummary,
+  getWeeklySummary,
+  updateGoals,
+} from "../services/api";
 
 function Dashboard() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [summary, setSummary] = useState(null);
+  const [weeklySummary, setWeeklySummary] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -26,13 +33,17 @@ function Dashboard() {
     setError("");
 
     try {
-      const data = await getDashboardSummary(selectedDate);
-      setSummary(data);
+      const [dailySummary, weekly] = await Promise.all([
+        getDashboardSummary(selectedDate),
+        getWeeklySummary(selectedDate),
+      ]);
+      setSummary(dailySummary);
+      setWeeklySummary(weekly);
       setGoalsForm({
-        calories: String(data.goals?.calories ?? ""),
-        protein: String(data.goals?.protein ?? ""),
-        carbs: String(data.goals?.carbs ?? ""),
-        fat: String(data.goals?.fat ?? ""),
+        calories: String(dailySummary.goals?.calories ?? ""),
+        protein: String(dailySummary.goals?.protein ?? ""),
+        carbs: String(dailySummary.goals?.carbs ?? ""),
+        fat: String(dailySummary.goals?.fat ?? ""),
       });
     } catch (requestError) {
       setError(requestError.message || "Unable to load dashboard");
@@ -129,6 +140,20 @@ function Dashboard() {
     ];
   }, [summary]);
 
+  const weeklyMaxCalories = useMemo(() => {
+    if (!weeklySummary?.days?.length) {
+      return 1;
+    }
+
+    const highestDailyCalories = Math.max(...weeklySummary.days.map((day) => day.calories));
+    return Math.max(highestDailyCalories, weeklySummary.goals?.calories || 0, 1);
+  }, [weeklySummary]);
+
+  function getDayLabel(isoDate) {
+    const dateValue = new Date(`${isoDate}T00:00:00`);
+    return dateValue.toLocaleDateString(undefined, { weekday: "short" });
+  }
+
   return (
     <section className="page">
       <header className="page__header">
@@ -160,6 +185,36 @@ function Dashboard() {
               </article>
             ))}
           </div>
+
+          {weeklySummary ? (
+            <section className="panel panel--full">
+              <h2>7-day trend</h2>
+              <p>
+                Avg daily intake: {weeklySummary.averages.calories} kcal | Protein {weeklySummary.averages.protein}
+                g | Carbs {weeklySummary.averages.carbs}g | Fat {weeklySummary.averages.fat}g
+              </p>
+              <p>
+                Logged days: {weeklySummary.loggedDays}/7 | Goal-hit days: {weeklySummary.goalHitDays?.all || 0}
+                /7 | Adherence: {weeklySummary.adherenceScore ?? 0}%
+              </p>
+
+              <div className="weekly-bars" aria-label="7 day calorie trend">
+                {weeklySummary.days.map((day) => {
+                  const height = Math.max((day.calories / weeklyMaxCalories) * 100, 5);
+
+                  return (
+                    <article key={day.date} className="weekly-bars__item">
+                      <div className="weekly-bars__track">
+                        <div className="weekly-bars__fill" style={{ height: `${height}%` }} />
+                      </div>
+                      <strong>{Math.round(day.calories)}</strong>
+                      <small>{getDayLabel(day.date)}</small>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
 
           <div className="panel-grid">
             <section className="panel">

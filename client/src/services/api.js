@@ -46,6 +46,11 @@ export async function getDashboardSummary(date) {
   return request(`/dashboard/summary${query}`);
 }
 
+export async function getWeeklySummary(endDate) {
+  const query = endDate ? `?endDate=${encodeURIComponent(endDate)}` : "";
+  return request(`/dashboard/weekly-summary${query}`);
+}
+
 export async function updateGoals(payload) {
   return request("/goals", {
     method: "PUT",
