@@ -9,10 +9,6 @@ function Signup() {
     name: "",
     email: "",
     password: "",
-    calorieGoal: "2200",
-    proteinGoal: "140",
-    carbGoal: "240",
-    fatGoal: "70",
   });
 
   const [message, setMessage] = useState("");
@@ -78,46 +74,6 @@ function Signup() {
             onChange={handleChange}
             required
             minLength={6}
-          />
-        </div>
-
-        <div>
-          <label>Calorie Goal</label>
-          <input
-            type="number"
-            name="calorieGoal"
-            value={formData.calorieGoal}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Protein Goal (g)</label>
-          <input
-            type="number"
-            name="proteinGoal"
-            value={formData.proteinGoal}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Carb Goal (g)</label>
-          <input
-            type="number"
-            name="carbGoal"
-            value={formData.carbGoal}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Fat Goal (g)</label>
-          <input
-            type="number"
-            name="fatGoal"
-            value={formData.fatGoal}
-            onChange={handleChange}
           />
         </div>
 
