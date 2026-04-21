@@ -353,4 +353,12 @@ async function startServer() {
   }
 }
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = {
+  app,
+  startServer,
+  AUTH_COOKIE_NAME,
+};

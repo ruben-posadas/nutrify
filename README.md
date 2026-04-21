@@ -64,6 +64,15 @@ npm run dev
 
 Frontend runs on `http://localhost:5173` and API on `http://localhost:5001`.
 
+## Testing
+
+Backend automated tests are available with Jest + Supertest.
+
+```bash
+cd server
+npm test
+```
+
 ## API Areas
 
 - `POST /api/signup`, `POST /api/login`, `POST /api/logout`, `GET /api/me`
