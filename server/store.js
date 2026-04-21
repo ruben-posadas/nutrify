@@ -18,6 +18,24 @@ function normalizeDate(value) {
   return String(value).slice(0, 10);
 }
 
+function shiftIsoDate(isoDate, dayOffset) {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + dayOffset);
+  return date.toISOString().slice(0, 10);
+}
+
+function buildDateRange(startDate, endDate) {
+  const range = [];
+  let cursor = startDate;
+
+  while (cursor <= endDate) {
+    range.push(cursor);
+    cursor = shiftIsoDate(cursor, 1);
+  }
+
+  return range;
+}
+
 function toNumber(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -232,6 +250,100 @@ async function getDashboardSummary(userId, date) {
         }
       : null,
     logs,
+  };
+}
+
+async function getWeeklySummary(userId, date) {
+  const endDate = normalizeDate(date);
+  const startDate = shiftIsoDate(endDate, -6);
+
+  const [user, dailyTotalsResult] = await Promise.all([
+    getUserById(userId),
+    pool.query(
+      `
+        SELECT
+          log_date,
+          COALESCE(SUM(calories), 0) AS calories,
+          COALESCE(SUM(protein), 0) AS protein,
+          COALESCE(SUM(carbs), 0) AS carbs,
+          COALESCE(SUM(fat), 0) AS fat
+        FROM food_logs
+        WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3
+        GROUP BY log_date
+        ORDER BY log_date ASC
+      `,
+      [userId, startDate, endDate],
+    ),
+  ]);
+
+  const totalsByDate = new Map(
+    dailyTotalsResult.rows.map((row) => {
+      const key = row.log_date instanceof Date ? row.log_date.toISOString().slice(0, 10) : String(row.log_date);
+      return [
+        key,
+        {
+          calories: Number(row.calories || 0),
+          protein: Number(row.protein || 0),
+          carbs: Number(row.carbs || 0),
+          fat: Number(row.fat || 0),
+        },
+      ];
+    }),
+  );
+
+  const days = buildDateRange(startDate, endDate).map((rangeDate) => ({
+    date: rangeDate,
+    ...(totalsByDate.get(rangeDate) || { calories: 0, protein: 0, carbs: 0, fat: 0 }),
+  }));
+
+  const sums = days.reduce(
+    (accumulator, day) => ({
+      calories: accumulator.calories + day.calories,
+      protein: accumulator.protein + day.protein,
+      carbs: accumulator.carbs + day.carbs,
+      fat: accumulator.fat + day.fat,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 },
+  );
+
+  const dayCount = days.length || 1;
+  const goals = user ? user.goals : null;
+  const loggedDays = days.filter((day) => day.calories || day.protein || day.carbs || day.fat).length;
+
+  const goalHitDays = goals
+    ? days.reduce(
+        (counts, day) => {
+          const caloriesHit = day.calories >= goals.calories;
+          const proteinHit = day.protein >= goals.protein;
+          const carbsHit = day.carbs >= goals.carbs;
+          const fatHit = day.fat >= goals.fat;
+
+          return {
+            calories: counts.calories + (caloriesHit ? 1 : 0),
+            protein: counts.protein + (proteinHit ? 1 : 0),
+            carbs: counts.carbs + (carbsHit ? 1 : 0),
+            fat: counts.fat + (fatHit ? 1 : 0),
+            all: counts.all + (caloriesHit && proteinHit && carbsHit && fatHit ? 1 : 0),
+          };
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0, all: 0 },
+      )
+    : null;
+
+  return {
+    startDate,
+    endDate,
+    days,
+    loggedDays,
+    goals,
+    averages: {
+      calories: Number((sums.calories / dayCount).toFixed(1)),
+      protein: Number((sums.protein / dayCount).toFixed(1)),
+      carbs: Number((sums.carbs / dayCount).toFixed(1)),
+      fat: Number((sums.fat / dayCount).toFixed(1)),
+    },
+    goalHitDays,
+    adherenceScore: goalHitDays ? Number(((goalHitDays.all / dayCount) * 100).toFixed(0)) : null,
   };
 }
 
@@ -662,6 +774,7 @@ module.exports = {
   deleteFoodLog,
   getDailyTotals,
   getDashboardSummary,
+  getWeeklySummary,
   createMeal,
   listMeals,
   getMealById,

@@ -179,6 +179,14 @@ app.get("/api/dashboard/summary", requireAuth, async (req, res, next) => {
   }
 });
 
+app.get("/api/dashboard/weekly-summary", requireAuth, async (req, res, next) => {
+  try {
+    return res.json(await store.getWeeklySummary(req.user.id, req.query.endDate));
+  } catch (error) {
+    return next(error);
+  }
+});
+
 app.put("/api/goals", requireAuth, async (req, res, next) => {
   try {
     const { calories, protein, carbs, fat } = req.body;

@@ -8,6 +8,7 @@ jest.mock("./store", () => ({
   createUser: jest.fn(),
   sanitizeUser: jest.fn(),
   getDashboardSummary: jest.fn(),
+  getWeeklySummary: jest.fn(),
   updateGoals: jest.fn(),
   listFoodLogs: jest.fn(),
   createFoodLog: jest.fn(),
@@ -124,6 +125,42 @@ describe("API tests", () => {
     expect(response.status).toBe(200);
     expect(response.body.totals.calories).toBe(800);
     expect(store.getDashboardSummary).toHaveBeenCalledWith("user-1", undefined);
+  });
+
+  test("GET /api/dashboard/weekly-summary returns 7-day data for authenticated user", async () => {
+    const token = jwt.sign({ sub: "user-1" }, JWT_SECRET, { expiresIn: "1h" });
+
+    store.getUserById.mockResolvedValue({
+      id: "user-1",
+      name: "Test User",
+      email: "test@example.com",
+      passwordHash: "hash",
+      goals: { calories: 2200, protein: 140, carbs: 240, fat: 70 },
+      createdAt: new Date().toISOString(),
+    });
+
+    store.getWeeklySummary.mockResolvedValue({
+      startDate: "2026-04-15",
+      endDate: "2026-04-21",
+      days: [
+        { date: "2026-04-15", calories: 1800, protein: 120, carbs: 200, fat: 60 },
+        { date: "2026-04-16", calories: 2100, protein: 145, carbs: 230, fat: 65 },
+        { date: "2026-04-17", calories: 0, protein: 0, carbs: 0, fat: 0 },
+      ],
+      loggedDays: 2,
+      averages: { calories: 557.1, protein: 37.9, carbs: 61.4, fat: 17.9 },
+      goalHitDays: { calories: 0, protein: 1, carbs: 0, fat: 0, all: 0 },
+      adherenceScore: 0,
+    });
+
+    const response = await request(app)
+      .get("/api/dashboard/weekly-summary?endDate=2026-04-21")
+      .set("Cookie", `${AUTH_COOKIE_NAME}=${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.endDate).toBe("2026-04-21");
+    expect(response.body.loggedDays).toBe(2);
+    expect(store.getWeeklySummary).toHaveBeenCalledWith("user-1", "2026-04-21");
   });
 
   test("GET /api/grocery-list returns alternatives for authenticated user", async () => {
