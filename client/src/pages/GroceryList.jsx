@@ -63,6 +63,11 @@ function GroceryList() {
       {groceryList && !isLoading && (
         <section className="panel">
           <h2>Estimated total: ${groceryList.totalCost.toFixed(2)}</h2>
+          {Number(groceryList.potentialSavings || 0) > 0 && (
+            <p>
+              Potential savings with substitutes: ${Number(groceryList.potentialSavings).toFixed(2)}
+            </p>
+          )}
           <p>
             {groceryList.mealCount} planned meal entries from {groceryList.startDate} to {groceryList.endDate}
           </p>
@@ -78,6 +83,20 @@ function GroceryList() {
                     <p>
                       {item.quantity} {item.unit} • ${item.cost.toFixed(2)}
                     </p>
+                    {item.cheaperAlternatives?.length > 0 ? (
+                      <div className="alternatives">
+                        <small>Cheaper options:</small>
+                        <ul>
+                          {item.cheaperAlternatives.map((alternative) => (
+                            <li key={`${item.name}-${alternative.name}-${alternative.unit}`}>
+                              {alternative.name} at ${alternative.pricePerUnit.toFixed(2)}/{alternative.unit}
+                              {" "}
+                              (save ${alternative.estimatedTotalSavings.toFixed(2)})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
                   <span>${item.pricePerUnit.toFixed(2)}/{item.unit}</span>
                 </li>

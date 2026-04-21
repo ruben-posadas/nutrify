@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { pool } = require("./db");
+const { buildCheaperAlternatives } = require("./groceryUtils");
 
 function createId() {
   return crypto.randomUUID();
@@ -588,13 +589,40 @@ async function getGroceryList(userId, startDate, endDate) {
   const items = Array.from(aggregated.values()).sort((first, second) =>
     first.name.localeCompare(second.name),
   );
-  const totalCost = items.reduce((sum, item) => sum + item.cost, 0);
+
+  const catalogResult = await pool.query(
+    `
+      SELECT mi.name, mi.unit, MIN(mi.price_per_unit) AS min_price_per_unit
+      FROM meals m
+      JOIN meal_ingredients mi ON mi.meal_id = m.id
+      WHERE m.user_id = $1
+      GROUP BY mi.name, mi.unit
+    `,
+    [userId],
+  );
+
+  const catalogRows = catalogResult.rows.map((row) => ({
+    name: row.name,
+    unit: row.unit,
+    pricePerUnit: Number(row.min_price_per_unit),
+  }));
+
+  const itemsWithAlternatives = buildCheaperAlternatives(items, catalogRows);
+  const totalCost = itemsWithAlternatives.reduce((sum, item) => sum + item.cost, 0);
+  const potentialSavings = itemsWithAlternatives.reduce((sum, item) => {
+    if (!item.cheaperAlternatives || item.cheaperAlternatives.length === 0) {
+      return sum;
+    }
+
+    return sum + item.cheaperAlternatives[0].estimatedTotalSavings;
+  }, 0);
 
   return {
     startDate: start,
     endDate: end,
-    items,
+    items: itemsWithAlternatives,
     totalCost,
+    potentialSavings,
     mealCount: mealPlans.length,
   };
 }

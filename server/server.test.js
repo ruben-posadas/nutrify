@@ -124,4 +124,53 @@ describe("API tests", () => {
     expect(response.body.totals.calories).toBe(800);
     expect(store.getDashboardSummary).toHaveBeenCalledWith("user-1", undefined);
   });
+
+  test("GET /api/grocery-list returns alternatives for authenticated user", async () => {
+    const token = jwt.sign({ sub: "user-1" }, JWT_SECRET, { expiresIn: "1h" });
+
+    store.getUserById.mockResolvedValue({
+      id: "user-1",
+      name: "Test User",
+      email: "test@example.com",
+      passwordHash: "hash",
+      goals: { calories: 2200, protein: 140, carbs: 240, fat: 70 },
+      createdAt: new Date().toISOString(),
+    });
+
+    store.getGroceryList.mockResolvedValue({
+      startDate: "2026-04-21",
+      endDate: "2026-04-21",
+      totalCost: 22,
+      potentialSavings: 4,
+      mealCount: 2,
+      items: [
+        {
+          name: "Chicken Breast",
+          unit: "g",
+          quantity: 800,
+          pricePerUnit: 0.02,
+          cost: 16,
+          category: "protein",
+          cheaperAlternatives: [
+            {
+              name: "Tofu",
+              unit: "g",
+              pricePerUnit: 0.015,
+              estimatedSavingsPerUnit: 0.005,
+              estimatedTotalSavings: 4,
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await request(app)
+      .get("/api/grocery-list?startDate=2026-04-21&endDate=2026-04-21")
+      .set("Cookie", `${AUTH_COOKIE_NAME}=${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.potentialSavings).toBe(4);
+    expect(response.body.items[0].cheaperAlternatives[0].name).toBe("Tofu");
+    expect(store.getGroceryList).toHaveBeenCalledWith("user-1", "2026-04-21", "2026-04-21");
+  });
 });
