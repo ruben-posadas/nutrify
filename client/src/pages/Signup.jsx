@@ -1,13 +1,22 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Signup() {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    calorieGoal: "2200",
+    proteinGoal: "140",
+    carbGoal: "240",
+    fatGoal: "70",
   });
 
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -19,37 +28,22 @@ function Signup() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setIsSubmitting(true);
+    setMessage("");
 
     try {
-      const response = await fetch("http://localhost:5001/api/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage(data.message || "Signup failed");
-        return;
-      }
-
+      const data = await signup(formData);
       setMessage(data.message);
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-      });
+      navigate("/dashboard");
     } catch (error) {
-      console.error(error);
-      setMessage("Server error");
+      setMessage(error.message || "Server error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <div>
+    <div className="page page--auth">
       <h1>Sign Up</h1>
 
       <form onSubmit={handleSubmit}>
@@ -60,6 +54,7 @@ function Signup() {
             name="name"
             value={formData.name}
             onChange={handleChange}
+            required
           />
         </div>
 
@@ -70,6 +65,7 @@ function Signup() {
             name="email"
             value={formData.email}
             onChange={handleChange}
+            required
           />
         </div>
 
@@ -80,10 +76,54 @@ function Signup() {
             name="password"
             value={formData.password}
             onChange={handleChange}
+            required
+            minLength={6}
           />
         </div>
 
-        <button type="submit">Create Account</button>
+        <div>
+          <label>Calorie Goal</label>
+          <input
+            type="number"
+            name="calorieGoal"
+            value={formData.calorieGoal}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div>
+          <label>Protein Goal (g)</label>
+          <input
+            type="number"
+            name="proteinGoal"
+            value={formData.proteinGoal}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div>
+          <label>Carb Goal (g)</label>
+          <input
+            type="number"
+            name="carbGoal"
+            value={formData.carbGoal}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div>
+          <label>Fat Goal (g)</label>
+          <input
+            type="number"
+            name="fatGoal"
+            value={formData.fatGoal}
+            onChange={handleChange}
+          />
+        </div>
+
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Creating account..." : "Create Account"}
+        </button>
       </form>
 
       {message && <p>{message}</p>}

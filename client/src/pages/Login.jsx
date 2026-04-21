@@ -1,12 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -18,36 +23,26 @@ function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setIsSubmitting(true);
+    setMessage("");
 
     try {
-      const response = await fetch("http://localhost:5001/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage(data.message || "Login failed");
-        return;
-      }
-
+      const data = await login(formData);
       setMessage(data.message);
       setFormData({
         email: "",
         password: "",
       });
+      navigate("/dashboard");
     } catch (error) {
-      console.error(error);
-      setMessage("Server error");
+      setMessage(error.message || "Server error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <div>
+    <div className="page page--auth">
       <h1>Login</h1>
 
       <form onSubmit={handleSubmit}>
@@ -58,6 +53,7 @@ function Login() {
             name="email"
             value={formData.email}
             onChange={handleChange}
+            required
           />
         </div>
 
@@ -68,10 +64,13 @@ function Login() {
             name="password"
             value={formData.password}
             onChange={handleChange}
+            required
           />
         </div>
 
-        <button type="submit">Login</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Signing in..." : "Login"}
+        </button>
       </form>
 
       {message && <p>{message}</p>}
