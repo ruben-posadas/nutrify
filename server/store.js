@@ -88,6 +88,30 @@ async function getUserById(userId) {
   return mapUser(result.rows[0]);
 }
 
+async function updateGoals(userId, goals) {
+  const result = await pool.query(
+    `
+      UPDATE users
+      SET
+        calorie_goal = $1,
+        protein_goal = $2,
+        carb_goal = $3,
+        fat_goal = $4
+      WHERE id = $5
+      RETURNING *
+    `,
+    [
+      toNumber(goals.calories),
+      toNumber(goals.protein),
+      toNumber(goals.carbs),
+      toNumber(goals.fat),
+      userId,
+    ],
+  );
+
+  return mapUser(result.rows[0]);
+}
+
 function mapFoodLog(row) {
   return {
     id: row.id,
@@ -631,6 +655,7 @@ module.exports = {
   createUser,
   getUserByEmail,
   getUserById,
+  updateGoals,
   sanitizeUser,
   createFoodLog,
   listFoodLogs,

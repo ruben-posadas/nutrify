@@ -179,6 +179,29 @@ app.get("/api/dashboard/summary", requireAuth, async (req, res, next) => {
   }
 });
 
+app.put("/api/goals", requireAuth, async (req, res, next) => {
+  try {
+    const { calories, protein, carbs, fat } = req.body;
+    const updatedUser = await store.updateGoals(req.user.id, {
+      calories,
+      protein,
+      carbs,
+      fat,
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      message: "Goals updated",
+      goals: updatedUser.goals,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 app.get("/api/food-logs", requireAuth, async (req, res, next) => {
   try {
     return res.json({ foodLogs: await store.listFoodLogs(req.user.id, req.query.date) });

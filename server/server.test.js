@@ -8,6 +8,7 @@ jest.mock("./store", () => ({
   createUser: jest.fn(),
   sanitizeUser: jest.fn(),
   getDashboardSummary: jest.fn(),
+  updateGoals: jest.fn(),
   listFoodLogs: jest.fn(),
   createFoodLog: jest.fn(),
   deleteFoodLog: jest.fn(),
@@ -172,5 +173,38 @@ describe("API tests", () => {
     expect(response.body.potentialSavings).toBe(4);
     expect(response.body.items[0].cheaperAlternatives[0].name).toBe("Tofu");
     expect(store.getGroceryList).toHaveBeenCalledWith("user-1", "2026-04-21", "2026-04-21");
+  });
+
+  test("PUT /api/goals updates goals for authenticated user", async () => {
+    const token = jwt.sign({ sub: "user-1" }, JWT_SECRET, { expiresIn: "1h" });
+
+    store.getUserById.mockResolvedValue({
+      id: "user-1",
+      name: "Test User",
+      email: "test@example.com",
+      passwordHash: "hash",
+      goals: { calories: 2200, protein: 140, carbs: 240, fat: 70 },
+      createdAt: new Date().toISOString(),
+    });
+
+    store.updateGoals.mockResolvedValue({
+      id: "user-1",
+      goals: { calories: 2400, protein: 160, carbs: 260, fat: 75 },
+    });
+
+    const response = await request(app)
+      .put("/api/goals")
+      .set("Cookie", `${AUTH_COOKIE_NAME}=${token}`)
+      .send({ calories: 2400, protein: 160, carbs: 260, fat: 75 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe("Goals updated");
+    expect(response.body.goals.calories).toBe(2400);
+    expect(store.updateGoals).toHaveBeenCalledWith("user-1", {
+      calories: 2400,
+      protein: 160,
+      carbs: 260,
+      fat: 75,
+    });
   });
 });
