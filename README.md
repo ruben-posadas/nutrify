@@ -1,26 +1,46 @@
 # nutrify
-A full-stack web application that helps users track nutrition, plan meals, and generate cost-efficient grocery lists.
 
-## Features
+Nutrify is a meal planning and nutrition tracking application focused on making healthy eating more affordable and practical.
 
-- User authentication
-- Calorie and macro tracking
-- Meal planning
-- Grocery list generation
-- Cost estimation for meals
-- Daily dashboard summaries
+It helps people plan meals, track daily nutrition, and make cost-aware grocery decisions with cheaper ingredient alternatives.
 
-## Current MVP Status
+## Implemented Features
 
-- Frontend: implemented auth flow, protected routes, dashboard logging, meal planner, and grocery list views.
-- Backend: implemented secure auth and CRUD-style APIs with PostgreSQL persistence.
-- Database: auto-initializes schema at server startup.
+- Email/password authentication with session cookies.
+- Protected frontend routes with session bootstrap on refresh.
+- Daily nutrition dashboard:
+	- food log create and delete
+	- calorie/protein/carbs/fat totals
+	- editable daily macro goals
+- Weekly dashboard analytics:
+	- 7-day per-day trend
+	- average daily macros
+	- logged-day count
+	- goal-hit count and adherence score
+- Meal library CRUD with ingredient and pricing support.
+- Meal plan scheduling by date.
+- Grocery list generation by date range with:
+	- aggregated ingredient totals
+	- cost estimate
+	- cheaper alternatives and potential savings
+
+## Mission
+
+Support healthier food decisions without increasing grocery costs by combining nutrition tracking with affordability insights.
+
+
 
 ## Tech Stack
 
-- Frontend: React
+- Frontend: React + Vite
 - Backend: Node.js + Express
 - Database: PostgreSQL
+- Testing: Jest + Supertest (backend)
+
+## Project Structure
+
+- [client](client): React app and pages
+- [server](server): Express API, PostgreSQL access layer, tests
 
 ## Local Setup
 
@@ -41,14 +61,14 @@ createdb nutrify
 
 ### 3. Configure backend environment
 
-Copy [server/.env.example](server/.env.example) to a new [server/.env](server/.env) file and update values as needed.
+Create [server/.env](server/.env) from [server/.env.example](server/.env.example).
 
-Required variables:
+Required values:
 
-- `PORT` (default: `5001`)
-- `CLIENT_URL` (default: `http://localhost:5173`)
-- `JWT_SECRET`
-- `DATABASE_URL` (default local example: `postgresql://localhost:5432/nutrify`)
+- PORT (default: 5001)
+- CLIENT_URL (default: http://localhost:5173)
+- JWT_SECRET
+- DATABASE_URL (default local example: postgresql://localhost:5432/nutrify)
 
 ### 4. Run the app
 
@@ -62,30 +82,74 @@ cd client
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173` and API on `http://localhost:5001`.
+App URLs:
+
+- Frontend: http://localhost:5173
+- API: http://localhost:5001
+
+## Available Scripts
+
+Server:
+
+- npm run dev
+- npm start
+- npm test
+
+Client:
+
+- npm run dev
+- npm run build
+- npm run preview
+
+## API Overview
+
+Auth:
+
+- POST /api/signup
+- POST /api/login
+- POST /api/logout
+- GET /api/me
+
+Dashboard:
+
+- GET /api/dashboard/summary
+- GET /api/dashboard/weekly-summary
+- PUT /api/goals
+
+Food logs:
+
+- GET /api/food-logs
+- POST /api/food-logs
+- DELETE /api/food-logs/:id
+
+Meals:
+
+- GET /api/meals
+- POST /api/meals
+- PUT /api/meals/:id
+- DELETE /api/meals/:id
+
+Meal plans:
+
+- GET /api/meal-plans
+- POST /api/meal-plans
+- DELETE /api/meal-plans/:id
+
+Grocery:
+
+- GET /api/grocery-list
 
 ## Testing
 
-Backend automated tests are available with Jest + Supertest.
+Run backend tests:
 
 ```bash
 cd server
 npm test
 ```
 
-## API Areas
+## Notes
 
-- `POST /api/signup`, `POST /api/login`, `POST /api/logout`, `GET /api/me`
-- `GET /api/dashboard/summary`
-- `GET|POST|DELETE /api/food-logs`
-- `GET|POST|PUT|DELETE /api/meals`
-- `GET|POST|DELETE /api/meal-plans`
-- `GET /api/grocery-list`
+- The server initializes required PostgreSQL tables/indexes at startup.
+- Auth is cookie-based (HttpOnly token), so frontend requests use credentials include.
 
-## Status
-
-🚧 In development (MVP)
-
-## 💡 Inspiration
-
-Inspired by apps like MyFitnessPal, with a focus on affordability and simplicity.
